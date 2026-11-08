@@ -87,6 +87,8 @@ main { padding: 8px 18px 18px; display: grid; gap: 12px; grid-template-columns: 
 .views button { font: inherit; font-size: 12px; color: var(--ink); background: rgba(15,20,24,.8); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; }
 .views button[aria-pressed="true"] { background: var(--accent); color: #1a1206; border-color: var(--accent); }
 #septMap { position: absolute; right: 10px; top: 330px; width: 320px; height: 300px; z-index: 6; border-radius: 8px; background: rgba(12,17,21,.92); border: 1px solid rgba(255,255,255,.18); }
+.credit { position: absolute; left: 12px; top: 606px; z-index: 6; font-family: var(--font-display); font-size: 14px; color: #e8dcc4; background: rgba(12,17,21,.72); padding: 3px 10px; border-radius: 4px; pointer-events: none; letter-spacing: .02em; }
+@media (max-width: 700px) { .credit { top: 428px; } }
 .keymini { font-size: 12px; color: #dbe5e9; background: rgba(15,20,24,.8); border-radius: 4px; padding: 2px 8px; }
 .keymini i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: -1px; }
 .tools .clean { background: #22303a; border-color: var(--accent); font-weight: 600; }
@@ -186,7 +188,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, label:focus-wit
 <header>
   <h1>Heart conduction model</h1>
   <span class="badge">Teaching simulation</span>
-  <div class="byline">Efrat Dahan · a teaching model of cardiac conduction</div>
+  <div class="byline">Created by Efrat Dahan · a teaching model of cardiac conduction</div>
   <div class="sub">A real human heart (BodyParts3D). Electricity is simulated through it and the ECG is calculated from it. It explains mechanisms; it does not read or diagnose anyone's ECG.</div>
 </header>
 <main>
@@ -220,6 +222,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, label:focus-wit
       <span class="keymini"><i style="background:#ffd114"></i>firing now <i style="background:#cccbc6"></i>already fired <i style="background:#73bfff"></i>recovering now <i style="background:#7d6a5e"></i>not yet (chamber colour) · <i style="background:#f2ead6"></i>conduction system (ivory lines; the ivory label marks the pulse on it)</span>
     </div>
     <svg id="pulseSvg" class="psvg" aria-hidden="true"></svg>
+    <div class="credit">Created by Efrat Dahan</div>
     <canvas id="septMap" width="320" height="300" hidden aria-label="The septum, flattened: left-ventricle side on the left, right-ventricle side on the right"></canvas>
     <div class="ptag2" id="avTag" hidden>pulse waiting here (AV node)</div>
     <div class="ptag" id="pulseTag" hidden><span class="ring"></span><span class="ptxt" id="pulseTxt">pulse</span></div>
