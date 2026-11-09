@@ -697,7 +697,7 @@ const NOT_YET = { 'Left anterior fascicular block': 'not in the model yet: in th
 const DEF_LEAD = { normal: 'V1', sbrady: 'II', stach: 'II', avb1: 'II', mobitz1: 'II', mobitz2: 'II', chb: 'II', rbbb: 'V1', lbbb: 'V1', wpw: 'V1', lad: 'V2', rca: 'III', lcx: 'V6', avnrt: 'II', flutter: 'II', subendo: 'V5', tinv: 'V2', pe: 'I' };
 const TEACH = {
   pe: ['Acute right-ventricular strain (e.g. pulmonary embolism)', `<p>A large clot suddenly loads the right ventricle. In the model three things change, all in the right ventricle and nothing else: its muscle conducts 1.8× slower (stretched), the right bundle 2.5× slower (the partial right bundle delay common in PE), and its cells hold their charge 40 ms longer (strain). Nothing is drawn by hand: the leads below are calculated from that.</p><p><b>S in I:</b> the right ventricle now finishes LAST, after the left one is done, so nothing cancels its pull to the right: lead I (looking from the left) ends with a deeper, late S. <b>Q in III:</b> the axis shifts right; III starts negative and gains a late R. <b>T in III and V1–V3:</b> the strained right ventricle recovers late, so the T inverts over it. That is S1Q3T3 and the right-precordial T inversion, each pointing at the right ventricle.</p><p>Limits: this heart's normal axis is leftish, so the Q3 change is smaller than in many patients; the amounts (1.8×, 2.5×, +40 ms) are a model choice, not calibrated. In real PE this pattern is specific but often absent; sinus tachycardia is the commonest ECG finding.</p>`],
-  normal: ['Normal sinus rhythm', `<p>The SA node fires, the wave crosses both atria (P wave) and waits in the AV node (flat PR segment). It leaves through the His bundle and bundle branches into the Purkinje fibres, and the ventricles fire from the inside out (QRS).</p><p>The left bundle reaches the septum first, so the septum fires left to right, toward V1: the small r in V1 and the small q in V6. Then the big left ventricle fires away from V1.</p>`],
+  normal: ['Normal sinus rhythm', `<p>The SA node fires, the wave crosses both atria (P wave) and waits in the AV node (flat PR segment). It leaves through the His bundle and bundle branches into the Purkinje fibres, and the ventricles fire from the inside out (QRS).</p><p>The left bundle reaches the septum first, so the septum fires from its left (LV) side to its right (RV) side, toward V1 (on the screen: from right to left): the small r in V1 and the small q in V6. Then the big left ventricle fires away from V1.</p>`],
   sbrady: ['Sinus bradycardia', `<p>The same heart, the same path: only the SA node fires more slowly (here 44 a minute). Every P is followed by a normal QRS; the gaps between beats are long.</p>`],
   stach: ['Sinus tachycardia', `<p>The SA node fires faster (here about 115 a minute). The path through the heart is unchanged, so every P still leads to a normal QRS; there is less flat line between beats.</p>`],
   avb1: ['1st-degree AV block', `<p>Every impulse gets through the AV node, but slowly: the PR interval is longer than 200 ms (here about 0.31 s). Every P is still followed by a QRS.</p>`],
@@ -1107,8 +1107,9 @@ function showSeptum(on) {
     septPts.geometry.setAttribute('position', new THREE.BufferAttribute(P, 3)); septPts.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(P.length), 3)); paintSeptum(clock); }
 }
 // The septum flattened (Efrat 2026-11-08: "the septum still doesn't look like it's firing"): every simulated septal
-// point, across the wall (LV side left, RV side right) by depth, base at the top, apex at the bottom, coloured by
-// state. The yellow front is seen sweeping across the wall: left to right normally, right to left in LBBB.
+// point, across the wall by depth, base at the top, apex at the bottom, coloured by state. Sides match the 3D view
+// (Efrat 2026-11-09: the panel had LV left / RV right, the heart shows them the other way): RV side LEFT, LV side RIGHT.
+// The yellow front sweeps across: from the LV side (right) to the RV side (left) normally, the other way in LBBB.
 // x = depth through the wall: distance to the LV surface / (to LV + to RV surface), from the septal points that lie on
 // each surface (heart.endo). A straight projection mixed depth with the septum's curve (it bulges into the RV).
 let septAx_ = null; const septAxF = () => septAx_ || (septAx_ = (() => {
@@ -1117,17 +1118,17 @@ let septAx_ = null; const septAxF = () => septAx_ || (septAx_ = (() => {
   const near = (i, set) => Math.sqrt(Math.min(...set.map(j => d2(P(i), P(j)))));
   return { x: septIds.map(i => heart.endo[i] === 'LV' ? 0 : heart.endo[i] === 'RV' ? 1 : (() => { const a = near(i, lvS), b = near(i, rvS); return a / (a + b || 1); })()), y: septIds.map(i => heart.axial[i]) }; })());
 function drawSeptMap(t) { const cv = document.getElementById('septMap'); if (cv.hidden) return; const septAx = septAxF(); const g = cv.getContext('2d'), W = cv.width, H = cv.height;
-  g.clearRect(0, 0, W, H); g.fillStyle = '#e8eef0'; g.font = '700 13px IBM Plex Sans, sans-serif'; g.fillText('The septum, cut across (left wall → right wall)', 10, 18);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#e8eef0'; g.font = '700 13px IBM Plex Sans, sans-serif'; g.fillText('The septum, cut across', 10, 18);
   g.font = '500 11px IBM Plex Sans, sans-serif'; let kx = 10; for (const [col, w] of [['#7a6b70', 'not yet'], ['#ffd114', 'firing now'], ['#cccbc6', 'done']]) { g.fillStyle = col; g.beginPath(); g.arc(kx + 4, 31, 4, 0, 7); g.fill(); g.fillStyle = '#c9d4d9'; g.fillText(w, kx + 11, 35); kx += 18 + g.measureText(w).width; }
   g.fillStyle = '#9aa7ad'; g.fillText('each dot = a piece of septal muscle', 10, 48);
-  g.font = '600 11px IBM Plex Sans, sans-serif'; g.fillStyle = '#c98a8a'; g.fillText('LV side', 10, H - 8); g.fillStyle = '#d9c38a'; const tw = g.measureText('RV side').width; g.fillText('RV side', W - tw - 10, H - 8);
+  g.font = '600 11px IBM Plex Sans, sans-serif'; g.fillStyle = '#d9c38a'; g.fillText('RV side', 10, H - 8); g.fillStyle = '#c98a8a'; const tw = g.measureText('LV side').width; g.fillText('LV side', W - tw - 10, H - 8);
   g.fillStyle = '#9aa7ad'; g.fillText('base', W / 2 - 12, 62); g.fillText('apex', W / 2 - 12, H - 8);
   const x0 = 34, x1 = W - 34, y0 = 70, y1 = H - 24;
   septIds.forEach((i, k) => { const c = stateCol(i, t, SEPT_REST, model.apd[i]); g.fillStyle = `rgb(${c.map(v => Math.round(v * 255)).join(',')})`;
-    g.beginPath(); g.arc(x0 + septAx.x[k] * (x1 - x0) + ((k * 37) % 9 - 4), y0 + septAx.y[k] * (y1 - y0), 3.4, 0, 7); g.fill(); });
+    g.beginPath(); g.arc(x0 + (1 - septAx.x[k]) * (x1 - x0) + ((k * 37) % 9 - 4), y0 + septAx.y[k] * (y1 - y0), 3.4, 0, 7); g.fill(); });
   // which way the front is moving across the wall, from the simulated times of the points firing now
   let sx = 0, n = 0; septIds.forEach((i, k) => { const f = lastFire(sim.fires[i], t); if (f !== null && t - f < 25) { sx += septAx.x[k]; n++; } });
-  if (n > 3) { const early = []; septIds.forEach((i, k) => { const f = lastFire(sim.fires[i], t); if (f !== null && t - f < 40) early.push([f, septAx.x[k]]); }); early.sort((a, b) => a[0] - b[0]);
+  if (n > 3) { const early = []; septIds.forEach((i, k) => { const f = lastFire(sim.fires[i], t); if (f !== null && t - f < 40) early.push([f, 1 - septAx.x[k]]); }); early.sort((a, b) => a[0] - b[0]);
     const h = Math.max(1, early.length >> 1), a = early.slice(0, h).reduce((m, e) => m + e[1], 0) / h, b = early.slice(h).reduce((m, e) => m + e[1], 0) / Math.max(1, early.length - h);
     if (Math.abs(b - a) > 0.08) { g.strokeStyle = '#ffd114'; g.fillStyle = '#ffd114'; g.lineWidth = 3; const ya = (y0 + y1) / 2, xa = W / 2 - 40 * Math.sign(b - a), xb = W / 2 + 40 * Math.sign(b - a);
       g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, ya); g.stroke(); g.beginPath(); g.moveTo(xb, ya); g.lineTo(xb - 10 * Math.sign(b - a), ya - 7); g.lineTo(xb - 10 * Math.sign(b - a), ya + 7); g.fill(); } } }
@@ -2131,7 +2132,7 @@ function buildStory(key) {
       const late = key === 'lbbb' ? /Left|Apex|Base/ : /Right/;
       merged.forEach((r, j) => { let pk = 0; for (let tt = r.t0; tt <= r.t1; tt += ecg.dt) if (Math.abs(at(tt)) > Math.abs(pk)) pk = at(tt);
         const sg = Math.abs(pk) < 0.06 * range ? 0 : Math.sign(pk), ms = Math.round(r.t1 - r.t0), mid = (r.t0 + r.t1) / 2, rl = r.reg.toLowerCase();
-        const why = r.reg === 'Septum' ? (key === 'lbbb' ? 'The septum fires first, but from its RIGHT side, because the left bundle is cut: the wave crosses it from right to left, the reverse of normal' : 'The septum fires first, from left to right, as normal (the left bundle is intact)')
+        const why = r.reg === 'Septum' ? (key === 'lbbb' ? 'The septum fires first, but from its RIGHT side, because the left bundle is cut: the wave crosses it from the RV side to the LV side (left to right on the screen), the reverse of normal' : 'The septum fires first, from the LV side to the RV side (right to left on the screen), as normal (the left bundle is intact)')
           : late.test(r.reg) ? `The ${rl} has no working bundle: it is reached from the other side, muscle cell to muscle cell, slowly (${ms} ms of this alone). That slowness is what makes the QRS wide`
           : `The ${rl} fires early through its intact bundle`;
         steps.push({ t0: r.t0, t1: r.t1, short: 'QRS', reg: r.reg, sg, focus: firingCentre(mid, ventAll), label: REGION_LABEL[r.reg] || 'LV', title: `QRS, part ${j + 1}: ${rl}`,
