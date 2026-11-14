@@ -92,6 +92,37 @@ main { padding: 8px 18px 18px; display: grid; gap: 12px; grid-template-columns: 
 #septMap { position: absolute; right: 10px; top: 330px; width: 320px; height: 300px; z-index: 6; border-radius: 8px; background: rgba(12,17,21,.92); border: 1px solid rgba(255,255,255,.18); }
 .credit { position: absolute; left: 12px; top: 606px; z-index: 6; font-family: var(--font-display); font-size: 14px; color: #e8dcc4; background: rgba(12,17,21,.72); padding: 3px 10px; border-radius: 4px; pointer-events: none; letter-spacing: .02em; }
 @media (max-width: 700px) { .credit { top: 428px; } }
+/* phone (Efrat 2026-11-14: "unreadable on my android"): nothing floats over the heart except the pulse tags;
+   controls, colour key and legend go below the picture; the ECG list becomes compact chips */
+@media (max-width: 700px) {
+  html, body { font-size: 14px; }
+  header { padding: 12px 12px 4px; } main { padding: 8px 10px 14px; gap: 10px; }
+  #view { padding-top: 0; display: flex; flex-direction: column; }
+  #three { position: relative; height: 380px !important; flex: none; order: 0; }
+  #labels { bottom: auto; height: 380px; }
+  .psvg { bottom: auto; height: 380px; }
+  .credit { top: 352px; font-size: 12px; }
+  .hcap { order: 1; margin: 6px; }
+  .tools { position: static; order: 2; margin: 4px 6px 8px; gap: 4px; }
+  .tools label, .views button { font-size: 12px; }
+  .keymini { flex-basis: 100%; line-height: 1.7; }
+  .legend { position: static; order: 3; margin: 0 6px 8px; }
+  #septMap { top: 150px; right: 6px; width: 58%; height: auto; }
+  .avhold { top: 8px; left: 8px; font-size: 12px; }
+  .lab { font-size: 10px; padding: 0 4px; } .lab.node, .lab.ch { font-size: 11px; } .lab.ring { max-width: 160px; font-size: 11px; }
+  .ptag .ptxt { font-size: 12px; white-space: normal; width: max-content; max-width: 46vw; }
+  .ptag2 { font-size: 11px; }
+  #link { display: none; }
+  .list { padding: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .list h3 { flex-basis: 100%; margin: 6px 4px 0; }
+  .list button { display: inline-block; width: auto; font-size: 13px; padding: 4px 9px; background: #1d272e; border: 1px solid var(--line); }
+  .list button[disabled] { display: none; }
+  .hctl button { font-size: 13px; padding: 4px 9px; }
+  .hcap .sthead b { font-size: 17px; } .story .ly { font-size: 15px; }
+  .minihint { flex-direction: column; gap: 2px; }
+  .seq li { flex-wrap: wrap; } .seq li .ms { margin-left: 22px; }
+  #lessonCv { height: 230px; }
+}
 .keymini { font-size: 12px; color: #dbe5e9; background: rgba(15,20,24,.8); border-radius: 4px; padding: 2px 8px; }
 .keymini i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: -1px; }
 .tools .clean { background: #22303a; border-color: var(--accent); font-weight: 600; }
@@ -1734,6 +1765,7 @@ function drawMini(t) {
   // The PR interval is all three; its flat part (PR segment) is the end of the wait plus the His trip.
   { const nm = model.name, F = sim.fires, y0 = H - BAR + 28, h = 12, X2 = (tt) => (tt - t0) * pxms;
     g.fillStyle = '#fbefed'; g.fillRect(0, H - BAR, W, BAR); g.strokeStyle = '#e0b5b1'; g.beginPath(); g.moveTo(0, H - BAR); g.lineTo(W, H - BAR); g.stroke();
+    let labEnd = -1e9;
     for (const sa of F[nm.SA] || []) { if (sa > t0 + span || sa < t0 - 400) continue;
       const av = (F[nm.AVN] || []).find(x => x >= sa && x < sa + 400), his = av !== undefined ? (F[nm.His] || []).find(x => x >= av && x < av + 450) : undefined;
       const q = his !== undefined ? qrsWins.find(w => w[0] >= his - 5 && w[0] < his + 200) : undefined;
@@ -1742,10 +1774,10 @@ function drawMini(t) {
         const xa = X2(a), xb = X2(b), now = t >= a && t < b; g.fillStyle = col; g.globalAlpha = now ? 1 : 0.55; g.fillRect(xa, y0, Math.max(1, xb - xa), h); g.globalAlpha = 1;
         if (now) { g.strokeStyle = '#1b1b1b'; g.lineWidth = 2; g.strokeRect(xa, y0, xb - xa, h); } }
       // one horizontal line of words under the beat: all three parts, the current one in bold
-      { let x = Math.max(2, X2(sa)); g.fillStyle = '#1b1b1b';
+      if (Math.max(2, X2(sa)) > labEnd + 6) { let x = Math.max(2, X2(sa)); g.fillStyle = '#1b1b1b';
         parts.forEach(([a, b, , name], k) => { if (a === undefined || b === undefined || b <= a) return; const now = t >= a && t < b;
           const lab = `${k ? ' · ' : ''}${name} ${Math.round(b - a)}${k === 2 ? ' ms' : ''}`; g.font = `${now ? 700 : 500} 11px IBM Plex Sans, sans-serif`;
-          if (x + g.measureText(lab).width < W) { g.fillText(lab, x, y0 + h + 11); x += g.measureText(lab).width; } }); }
+          if (x + g.measureText(lab).width < W) { g.fillText(lab, x, y0 + h + 11); x += g.measureText(lab).width; } }); labEnd = x; }
       // the two atria under the P: right first, then both, then the left one alone (Efrat 2026-11-08: "isn't it
       // firing with the left atrium?")
       { const span = (ids) => { let a = Infinity, b = -Infinity; for (const i of ids) { const f = (F[i] || []).find(x => x >= sa - 2 && x < sa + 250); if (f !== undefined) { a = Math.min(a, f); b = Math.max(b, f + 12); } } return a < b ? [a, b] : null; };
@@ -2020,7 +2052,7 @@ function run(key) {
     const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-    const sx = 18, sw = W * 0.42, sy = H * 0.5;
+    const narrow = W < 520, sx = 18, sw = narrow ? W * 0.62 : W * 0.42, sy = narrow ? H * 0.26 : H * 0.5;   // phone: trace below the strip
     for (let i = 0; i < N; i++) { const ta = actT(i), x = sx + (i / (N - 1)) * sw;
       let c = '#7a3a2e'; if (start !== null) { if (t >= ta && t < ta + 60) c = '#ffd114'; else if (t >= ta + 60) c = '#bdd6e6'; }
       g.fillStyle = c; g.fillRect(x - sw / N / 2, sy - 14, sw / N - 1, 28); }
@@ -2029,9 +2061,9 @@ function run(key) {
     g.fillStyle = s > 0 ? '#22c55e' : s < 0 ? '#ef4444' : '#f4f4f4'; g.beginPath(); g.arc(ex, ey, 9, 0, 2 * Math.PI); g.fill();
     g.fillStyle = '#e6ecef'; g.font = '600 12px IBM Plex Mono, monospace'; g.textAlign = 'center'; g.fillText('electrode', ex, ey - 14);
     g.fillStyle = '#8fa2ab'; g.font = '12px IBM Plex Sans, sans-serif'; g.textAlign = 'left'; g.fillText('strip of muscle', sx, sy + 30);
-    const tx = sx + sw + 70, tw = W - tx - 12, ty = H * 0.5, sc = 9;
+    const tx = narrow ? 18 : sx + sw + 70, tw = W - tx - 12, ty = narrow ? H * 0.68 : H * 0.5, sc = 9;
     g.strokeStyle = '#2b3942'; g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx + tw, ty); g.stroke();
-    g.fillStyle = '#8fa2ab'; g.fillText('what the electrode draws', tx, 16);
+    g.fillStyle = '#8fa2ab'; g.fillText('what the electrode draws', tx, narrow ? ty - 34 : 16);
     for (let k = 1; k < trace.length; k++) { const [t1, v1] = trace[k - 1], [t2, v2] = trace[k]; const ss = Math.abs(v2) < 0.4 ? 0 : Math.sign(v2);
       g.strokeStyle = ss > 0 ? '#22c55e' : ss < 0 ? '#ef4444' : '#d6dde1'; g.lineWidth = 2.5; g.beginPath();
       g.moveTo(tx + t1 / (CROSS * 1.25) * tw, ty - v1 * sc); g.lineTo(tx + t2 / (CROSS * 1.25) * tw, ty - v2 * sc); g.stroke(); }
